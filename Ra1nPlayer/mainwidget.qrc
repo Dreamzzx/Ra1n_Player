@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/title">
+        <file>sources/title/maximize-2.svg</file>
+        <file>sources/title/minimize-3.svg</file>
+        <file>sources/title/minus.svg</file>
+        <file>sources/title/x.svg</file>
+        <file>qss/title.css</file>
+    </qresource>
+</RCC>

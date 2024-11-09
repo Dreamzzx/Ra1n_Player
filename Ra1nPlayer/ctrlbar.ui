@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CtrlBarClass</class>
+ <widget class="QWidget" name="CtrlBarClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>742</width>
+    <height>84</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>CtrlBar</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="played_time">
+       <property name="text">
+        <string>00：00</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="MySlider" name="ProgressBar">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLabel" name="end_time">
+       <property name="text">
+        <string>00：00</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" colspan="3">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QPushButton" name="back_offBtn">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>后退</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="play_or_pause_Btn">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>开始</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="fast_forwardBtn">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>快进</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="endBtn">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>中止</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="voiceBtn">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>静音</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="speed_comboBox"/>
+       </item>
+       <item>
+        <widget class="MySlider" name="volume_progressBar">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Expanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>300</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="maxBtn">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>最大化</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="fullBtn">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>全屏</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>MySlider</class>
+   <extends>QSlider</extends>
+   <header>myslider.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
