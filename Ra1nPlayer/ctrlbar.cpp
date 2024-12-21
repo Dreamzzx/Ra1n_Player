@@ -36,10 +36,23 @@ void CtrlBar::SetTime(int event,double playtime)
 	}
 }
 
+void CtrlBar::ChangePlay_Or_PauseBtnStyle()
+{
+	if (playBtn) {
+		ui.play_or_pause_Btn->setIcon(playStyleBtn);
+		playBtn = false;
+	}
+	else {
+		ui.play_or_pause_Btn->setIcon(pauseStyleBtn);
+		playBtn = true;
+	}
+}
+
 void CtrlBar::InitUi()
 {
 	//connect
-	connect(ui.play_or_pause_Btn, &QPushButton::clicked, this,&CtrlBar::Play_Or_PauseBtnClick);
+	connect(ui.play_or_pause_Btn, &QPushButton::clicked, this, &CtrlBar::Play_Or_PauseBtnClick);
+	connect(ui.play_or_pause_Btn, &QPushButton::clicked, this,&CtrlBar::ChangePlay_Or_PauseBtnStyle);
 	connect(ui.endBtn, &QPushButton::clicked, this, &CtrlBar::EndBtnClick);
 	connect(ui.voiceBtn, &QPushButton::clicked, this, &CtrlBar::VoiceBtnClick);
 	connect(ui.fast_forwardBtn,&QPushButton::clicked, this, &CtrlBar::FastForwardBtnClick);
@@ -48,6 +61,7 @@ void CtrlBar::InitUi()
 	connect(ui.ProgressBar, &MySlider::SliderChange, this, &CtrlBar::SliderChange);
 	connect(ui.volume_progressBar, &MySlider::SliderChange, this, &CtrlBar::Volume_Change);
 	connect(ui.speed_comboBox, &QComboBox::textActivated, this, &CtrlBar::Speed_Change);
+
 
 	//±¶ËÙ
 	ui.speed_comboBox->addItem("0.25");
@@ -59,5 +73,12 @@ void CtrlBar::InitUi()
 	ui.speed_comboBox->addItem("1.75");
 	ui.speed_comboBox->addItem("2.0");
 	ui.speed_comboBox->setCurrentIndex(3);
+
+	//Í¼Æ¬ÑùÊ½
+	voice_btn = QIcon(":/ctrlbar/sources/ctrlbar/volume-1.svg");
+	playStyleBtn = QIcon(":/ctrlbar/sources/ctrlbar/play.svg");
+	pauseStyleBtn = QIcon(":/ctrlbar/sources/ctrlbar/pause.svg");
+	ui.voiceBtn->setIcon(voice_btn);
+	ui.play_or_pause_Btn->setIcon(playStyleBtn);
 }
 

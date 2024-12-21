@@ -156,7 +156,7 @@ public:
 	//float volumeFactor = 1.0;//音量因子
 	int volume = 50;
 
-	float volume_speed = 1.5;
+	float volume_speed = 1.0;
 	//视频输出相关
 	std::function<int(const Frame*)> video_refresh_callback_ = nullptr;
 	AVCodecContext* vidctx = nullptr;

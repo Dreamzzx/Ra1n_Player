@@ -85,13 +85,14 @@ void MainWidget::OnPlayOrPause()
         mp_->SetCtrlCallBack(std::bind(&CtrlBar::SetTime, ui.ctrlBarWind, std::placeholders::_1, std::placeholders::_2));
     }
         //设置url
-        mp_->ra1nmp_set_data_source(FilePath_->toStdString().c_str());
+        QByteArray byteArray = FilePath_->toUtf8(); // 转换为 UTF-8 编码
+        mp_->ra1nmp_set_data_source(byteArray.constData());
         //设置视频标题
         QFileInfo fileInfo(*FilePath_);
         m_title.SetName(fileInfo.baseName());
         //准备工作
         ret = mp_->ra1nmp_prepare_async();
-        //设置SDL句柄
+        ///设置SDL句柄
         ui.showWind->setWinID(ui.showWind->winId());
 
         if (ret < 0)
@@ -104,10 +105,17 @@ void MainWidget::OnPlayOrPause()
 
 void MainWidget::PlayOrPause()
 {
-    if (mp_->is_paused()) 
-        mp_->ra1nmp_play();
-    else
-        mp_->ra1nmp_pause();
+    if (mp_) 
+    {
+        if (mp_->is_paused()) {
+            mp_->ra1nmp_play();
+            emit& CtrlBar::ChangePlay_Or_PauseBtnStyle;
+        }
+        else {
+            mp_->ra1nmp_pause();
+            emit& CtrlBar::ChangePlay_Or_PauseBtnStyle;
+        }
+    }
 }
 
 //中止播放
@@ -249,6 +257,7 @@ void MainWidget::OpenFile()
 
 void MainWidget::VoiceMuted()
 {
+    if(mp_)
     mp_->ra1nmp_set_volum_muted();
 }
 

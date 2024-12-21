@@ -6,4 +6,12 @@
         <file>sources/title/x.svg</file>
         <file>qss/title.css</file>
     </qresource>
+    <qresource prefix="/ctrlbar">
+        <file>sources/ctrlbar/fast-forward.svg</file>
+        <file>sources/ctrlbar/pause.svg</file>
+        <file>sources/ctrlbar/play.svg</file>
+        <file>sources/ctrlbar/volume-2.svg</file>
+        <file>sources/ctrlbar/volume-x.svg</file>
+        <file>sources/ctrlbar/volume-1.svg</file>
+    </qresource>
 </RCC>

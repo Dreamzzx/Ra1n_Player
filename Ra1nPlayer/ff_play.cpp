@@ -186,7 +186,6 @@ void FFPlayer::ffp_destroy()
 
 int FFPlayer::ffp_prepare_async_l(char* filename)
 {
-	
 	printf("打开文件\n");
 	input_filename_ = strdup(filename);//保存文件名字
 	int ret = stream_open(input_filename_);
@@ -227,6 +226,9 @@ fail:
 void FFPlayer::stream_close()
 {
 	abort_request = 1;
+
+	packet_queue_abort(&audio_queue_);
+	packet_queue_abort(&video_queue_);
 
 	if (read_thread_ && read_thread_->joinable())
 	{
@@ -497,7 +499,7 @@ int FFPlayer::read_thread()
 				packet_queue_put_pkt(&audio_queue_, &flush_pkt);
 				packet_queue_flush(&video_queue_);
 				packet_queue_put_pkt(&video_queue_, &flush_pkt);
-				//清空解码缓冲区
+				
 			}
 			audclk.pts = position;
 
@@ -652,7 +654,7 @@ void FFPlayer::video_refresh(double* remaining_time)
 		double diff = vp->pts - aftime;
 
 		//视频帧慢于音频帧直接丢弃掉，快于音频帧延迟一下
-		if (diff > 0 && vp->serial == this->serial)
+		if (diff > 0 && vp->serial != this->serial)
 		{
 			*remaining_time = FFMIN(*remaining_time, diff);
 			return;  

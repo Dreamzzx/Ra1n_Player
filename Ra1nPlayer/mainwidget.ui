@@ -61,8 +61,11 @@
             </property>
             <item>
              <widget class="QLabel" name="label">
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(52, 52, 52);</string>
+              </property>
               <property name="text">
-               <string>显示画面</string>
+               <string/>
               </property>
              </widget>
             </item>

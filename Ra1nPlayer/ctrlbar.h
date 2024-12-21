@@ -12,6 +12,7 @@ public:
 	~CtrlBar();
 
 	void SetTime(int event,double playtime);
+	void ChangePlay_Or_PauseBtnStyle();
 
 private:
 
@@ -26,6 +27,7 @@ private:
 	{
 		emit Volume_Change(position);
 	}
+	
 signals:
 	void EndBtnClick();
 	void FullBtnClick();
@@ -37,7 +39,16 @@ signals:
 	void Play_Seek(double position);
 	void Volume_Change(float positon);
 	void Speed_Change(const QString str);
+	
 
 private:
 	Ui::CtrlBarClass ui;
+
+
+	QIcon voice_btn;
+	QIcon playStyleBtn;
+	QIcon pauseStyleBtn;
+
+
+	bool playBtn = false;
 };

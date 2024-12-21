@@ -15,8 +15,8 @@ void packet_queue_start(PacketQueue* queue,AVPacket* flush_pkt)
 void packet_queue_put_pkt(PacketQueue* q,AVPacket* pkt)
 {
 	SDL_LockMutex(q->mutex);
-	while (q->nb_packets >= PKTS_MAX_SIZE) {
-		SDL_CondWait(q->not_full, q->mutex); // 等待条件变量，解锁并阻塞线程，直到被唤醒
+	while (q->nb_packets >= PKTS_MAX_SIZE && !q->abort_request) {
+		SDL_CondWaitTimeout(q->not_full, q->mutex,500); // 等待条件变量，解锁并阻塞线程，直到被唤醒
 	}
 	q->pkts.push_back(*pkt);
 	q->nb_packets++;
