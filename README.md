@@ -4,7 +4,7 @@
 
 Xplayer重构后的播放器，Qt播放，具有三层包装，UI与内核沟通之间设计了消息队列。
 
-![1](D:\Project\test\Ra1n_Player\Ra1nPlayer\img\1.png)
+![1](.\Ra1nPlayer\img\1.png)
 
 1.0 
 
