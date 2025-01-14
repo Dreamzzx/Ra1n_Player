@@ -5,29 +5,38 @@
 #define SDL_MIX_MAXVOLUME 128
 
 static AVPacket flush_pkt;
+static int64_t audio_callback_time;
 
 static int audio_decode_frame(FFPlayer* is)
 {
 	int data_size, resample_data_size = 0;
 	AVChannelLayout dec_channel_layout;
 	int wanted_nb_samples;
-	Frame* af;
+	Frame* af = nullptr;
 	int ret = 0;
+	int len2; // 存储重采样后单个声音通道里存储的变量
+
 
 	if (is->audio_queue_.abort_request)
 		return -1;
 
-	if (is->paused)
+ 	if (is->paused)
 		return -1;
 
 	//读一帧数据
 	af = frame_queue_peek_readable(&is->sample_queue_);
+	
+	if (af == nullptr) {
+		return 0;
+	}
 
-	////调整音频帧音量
-	//is->set_volume(af,af->frame->channels,af->frame->nb_samples,1.5);
-
-	//倍速设置
-	af->frame->sample_rate = af->frame->sample_rate * is->volume_speed;
+	// 进行了seek操作
+	if (af->serial != is->serial) 
+	{
+		frame_queue_next(&is->sample_queue_);
+		return -1;
+	}
+	
 
 	if (!af)
 		return -1;
@@ -66,9 +75,9 @@ static int audio_decode_frame(FFPlayer* is)
 	if (is->swr_ctx)
 	{
 			const uint8_t** in = (const uint8_t**)af->frame->extended_data; //data[0],data[1]
-			uint8_t** out = &is->audio_buf1;
+			uint8_t** out = &is->audio_resample_buf;
 			int out_count = (int64_t)wanted_nb_samples * is->audio_tgt.freq / af->frame->sample_rate +256; // +256 的目的是重采样内部有一定的缓存
-			
+		
 			//计算对应的样本数
 			int out_size = av_samples_get_buffer_size(NULL, is->audio_tgt.channels, out_count, is->audio_tgt.fmt, 0);
 			if (out_size < 0)
@@ -77,12 +86,11 @@ static int audio_decode_frame(FFPlayer* is)
 			}
 
 			//快速分配空间 将数据分配给audio_buf1 将数据大小分配给audio_buf1_size
-			av_fast_malloc(&is->audio_buf1,&is->audio_buf1_size, out_size);
-			if (!is->audio_buf1)
+			av_fast_malloc(&is->audio_resample_buf,&is->audio_resample_buf_size, out_size);
+			if (!is->audio_resample_buf)
 			{
 				goto fail;
 			}
-			int len2;
 			//音频重采样 len2返回值是重采样后得到的音频数据中单个声道的样本数
 			len2 = swr_convert(is->swr_ctx, out, out_count, in, af->frame->nb_samples);
 
@@ -94,7 +102,8 @@ static int audio_decode_frame(FFPlayer* is)
 			{
 				//
 			}
-			is->audio_buf = is->audio_buf1;
+
+			is->audio_buf = is->audio_resample_buf;
 			resample_data_size = len2 * is->audio_tgt.channels * av_get_bytes_per_sample(is->audio_tgt.fmt);
 	}
 
@@ -105,7 +114,6 @@ static int audio_decode_frame(FFPlayer* is)
 	}
 	else
 		is->audio_clock = NAN;
-
 	frame_queue_next(&is->sample_queue_);
 	return resample_data_size;
 fail:
@@ -116,12 +124,15 @@ fail:
 static void sdl_audio_callback(void* opaque, Uint8* stream, int len)
 {
 	FFPlayer* is = (FFPlayer *)opaque;
+
+	audio_callback_time = av_gettime_relative();
+
 	int audio_size, len1;
 	while (len > 0)
 	{
 
 		if (is->audio_buf_index >= is->audio_buf_size)
-		{
+		{ 
 			audio_size = audio_decode_frame(is);
 			if (audio_size < 0)
 			{
@@ -131,29 +142,70 @@ static void sdl_audio_callback(void* opaque, Uint8* stream, int len)
 			{
 				is->audio_buf_size = audio_size;
 			}
-				is->audio_buf_index = 0;
+
+			is->audio_buf_index = 0;
+
+			// 判断是否要变速
+			if (is->useSonic)
+			{
+				is->useSonic = !is->useSonic;
+				if (is->sonic_stream_ready)
+				{
+					sonicDestroyStream(is->sncStream);
+				}
+				is->sonic_stream_ready = true;
+				is->sncStream = sonicCreateStream(is->audio_tgt.freq, is->audio_tgt.channels);
+				sonicSetSpeed(is->sncStream, is->volume_speed);
+				sonicSetPitch(is->sncStream, 1.0);
+				sonicSetRate(is->sncStream, 1.0);	
+			}
+			// 进行了变速 
+			if (is->volume_speed != 1.0 && is->audio_buf)
+			{
+				int actual_out_samples = is->audio_buf_size/ (is->audio_tgt.channels * av_get_bytes_per_sample(is->audio_tgt.fmt));
+				int ret;
+				int num_available_samples = 0;
+				int out_size = 0;
+				int sonic_samples = 0;
+
+				ret = sonicWriteShortToStream(is->sncStream, (short*)is->audio_buf, actual_out_samples);
+				num_available_samples = sonicSamplesAvailable(is->sncStream);
+				out_size = num_available_samples * is->audio_tgt.channels * av_get_bytes_per_sample(is->audio_tgt.fmt);
+				//printf("sonic_size:%d\n", out_size);
+
+				av_fast_malloc(&is->sonic_buf, &is->sonic_buf_size, out_size);
+				if (ret)
+				{
+					sonic_samples = sonicReadShortFromStream(is->sncStream, (short*)is->sonic_buf, num_available_samples);
+
+					is->audio_buf = is->sonic_buf;
+					is->audio_buf_size = sonic_samples * is->audio_tgt.channels * av_get_bytes_per_sample(is->audio_tgt.fmt);
+					is->audio_buf_index = 0;
+				}
+			}
+		}
+			
+
+		len1 = is->audio_buf_size - is->audio_buf_index;
+		if (len1 > len)
+		{
+				len1 = len;
+		}
+		if (is->audio_buf && !is->volum_muted)
+		{
+			memset(stream, 0, len1);
+			//memcpy(stream,is->audio_buf+is->audio_buf_index, len1);
+			SDL_MixAudio(stream, (uint8_t*)is->audio_buf + is->audio_buf_index, len1, is->volume);
+		}
+		else
+		{
+			//静音
+			memset(stream,0,len1);
 		}
 
-			len1 = is->audio_buf_size - is->audio_buf_index;
-			if (len1 > len)
-			{
-				len1 = len;
-			}
-			if (is->audio_buf && !is->volum_muted)
-			{
-				memset(stream, 0, len1);
-				//memcpy(stream,is->audio_buf+is->audio_buf_index, len1);
-				SDL_MixAudio(stream, (uint8_t*)is->audio_buf + is->audio_buf_index, len1, is->volume);
-			}
-			else
-			{
-				//静音
-				memset(stream,0,len1);
-			}
-
-			len -= len1;
-			stream += len1;
-			is->audio_buf_index += len1;
+		len -= len1;
+		stream += len1;
+		is->audio_buf_index += len1;
 	}
 	
 	//更新时钟
@@ -174,11 +226,6 @@ FFPlayer::~FFPlayer()
 {
 }
 
-int FFPlayer::ffp_create()
-{
-	
-	return 0;
-}
 
 void FFPlayer::ffp_destroy()
 {
@@ -225,7 +272,11 @@ fail:
 
 void FFPlayer::stream_close()
 {
-	abort_request = 1;
+	
+	{
+		std::unique_lock<std::mutex>lock(mtx);
+		abort_request = 1;
+	}
 
 	packet_queue_abort(&audio_queue_);
 	packet_queue_abort(&video_queue_);
@@ -238,6 +289,7 @@ void FFPlayer::stream_close()
 	}
 	if (video_refresh_thread_ && video_refresh_thread_->joinable())
 	{
+		printf("wait join");
 		video_refresh_thread_->join();
 		video_refresh_thread_ = nullptr;
 		std::cout << "video_refresh_thread_ end" << std::endl;
@@ -326,7 +378,7 @@ int FFPlayer::stream_component_open(int stream_index)
 		//开启解码线程
 		auddec.decoder_start(avctx->codec_type, "audio_thread", this);
 
-		std::cout << audio_st->codecpar->codec_id << std::endl;
+		// 初始化snoic结构体
 
 		//允许音频输出
 		SDL_PauseAudio(0);
@@ -371,10 +423,10 @@ void FFPlayer::stream_component_close(int stream_index)
 		swr_free(&swr_ctx);
 		swr_ctx = nullptr;
 		}
-		if(audio_buf1)
-		av_freep(&audio_buf1);
+		if(audio_resample_buf)
+		av_freep(&audio_resample_buf);
 
-		audio_buf1_size = 0;
+		audio_resample_buf_size = 0;
 		audio_buf = nullptr;
 		break;
 		case AVMEDIA_TYPE_VIDEO:
@@ -408,7 +460,6 @@ int FFPlayer::read_thread()
 	int st_index[AVMEDIA_TYPE_NB];//AVMEDIA_TYPE_VIDEO AVMEDIA_TYPE_AUDIO
 	AVPacket pkt1;
 	AVPacket* pkt = &pkt1;
-	int serial = 0;
 
 	memset(st_index, -1, sizeof(st_index));
 	video_stream_ = -1;
@@ -482,9 +533,12 @@ int FFPlayer::read_thread()
 	//6.循环读取包数据，并将包放入相应的队列中
 	for (;;)
 	{
-		if (abort_request)
 		{
-			break;
+			std::unique_lock<std::mutex>lock(mtx);
+			if (abort_request  == 1)
+			{
+				break;
+			}
 		}
 
 		//seek操作
@@ -497,11 +551,13 @@ int FFPlayer::read_thread()
 				//清空队列
 				packet_queue_flush(&audio_queue_);
 				packet_queue_put_pkt(&audio_queue_, &flush_pkt);
+				
 				packet_queue_flush(&video_queue_);
 				packet_queue_put_pkt(&video_queue_, &flush_pkt);
-				
 			}
+			av_usleep(100000);
 			audclk.pts = position;
+			vidclk.pts = position;
 
 			serial++;
 			auddec.setSerial(serial);
@@ -581,23 +637,6 @@ int FFPlayer::audio_open(AVChannelLayout wanted_channels_layout, int wanted_nb_c
 	return wanted_spec.size;
 }
 
-//void FFPlayer::set_volume(Frame *src_f,int channels,int nb_samples,float volume)
-//{
-//	uint8_t** data = src_f->frame->extended_data;
-//
-//	//float* ret = static_cast<float>(data);
-//	for (int i = 0; i < nb_samples; i++)
-//	{
-//		for (int j = 0; j < channels; j++)
-//		{
-//			// 获取当前样本值（根据样本格式进行转换）
-//			int16_t* sample = (int16_t*)(data[j] + i * sizeof(int16_t));
-//			// 调整音量
-//			*sample = static_cast<int16_t>(*sample * 0.5);
-//		}
-//	}
-//}
-
 void FFPlayer::audio_close()
 {
 	SDL_CloseAudio();
@@ -621,16 +660,25 @@ void FFPlayer::video_display()
 int FFPlayer::video_refresh_thread()
 {
 	double remaining_time = 0.0;
-	while (!abort_request)
+	while (1)
 	{
+		std::unique_lock<std::mutex>lock(mtx);
+		if (abort_request == 1)
+			break;
+		lock.unlock();
 		if (remaining_time > 0.0)
 			av_usleep(remaining_time * 1000000.0);
 		remaining_time = REFRESN_RATE;
-		if(!this->paused)
-		video_refresh(&remaining_time);
+		if (!this->paused)
+		{
+			video_refresh(&remaining_time);
+		}
 	}
-	//结束后刷新一帧黑屏画面
-	video_refresh_callback_(NULL);
+
+		//结束后刷新一帧黑屏画面
+		video_refresh_callback_(NULL);
+		
+	
 	return 0;
 }
 
@@ -646,15 +694,20 @@ void FFPlayer::video_refresh(double* remaining_time)
 			return ;
 
 		vp = frame_queue_peek_readable(&picture_queue_);
-
 		if (!vp)
 			return;
-		
+		// seek操作了 需要释放掉此帧
+		if (vp->serial != this->serial) 
+		{
+			frame_queue_next(&picture_queue_);
+			return;
+		}
+	
 		double aftime = get_clock(&audclk);
 		double diff = vp->pts - aftime;
 
 		//视频帧慢于音频帧直接丢弃掉，快于音频帧延迟一下
-		if (diff > 0 && vp->serial != this->serial)
+		if (diff > 0)
 		{
 			*remaining_time = FFMIN(*remaining_time, diff);
 			return;  
@@ -751,21 +804,11 @@ int Decoder::audio_thread(void *arg)
 		}
 		if (got_frame)
 		{
-			// 1设置sample_rate 为timebase
-			tb ={ 1 , frame->sample_rate };
-			//2.获取可写的Frame
-			af = frame_queue_peek_writable(&is->sample_queue_);
-			if (!af)
-				break;
 
-			af->pts = frame->pts;
-			af->format = frame->format;
-			af->duration = frame->duration;
-			af->serial = this->serial_;
-
-			//3.设置Frame并放入FrameQueue
-			av_frame_move_ref(af->frame, frame);
-			frame_queue_push(&is->sample_queue_);
+			ret = put_sample(&is->sample_queue_,frame);
+			if (ret < 0) {
+				goto the_end;
+			}
 		}
 	}
 
@@ -918,6 +961,8 @@ int Decoder::put_picture(FrameQueue* q, AVFrame* frame,double pts)
 		vp->width = frame->width;
 		vp->height = frame->height;
 		vp->pts = pts;
+		//printf("this->serial_ : %d\n", this->serial_);
+		vp->serial = this->serial_;
 		vp->duration = frame->duration;
 		av_frame_move_ref(vp->frame, frame);
 	}
@@ -926,6 +971,22 @@ int Decoder::put_picture(FrameQueue* q, AVFrame* frame,double pts)
 
 int Decoder::put_sample(FrameQueue* q, AVFrame* frame)
 {
+	Frame* af;
+	AVRational tb;
+	// 1设置sample_rate 为timebase
+	tb = { 1 , frame->sample_rate };
+	//2.获取可写的Frame
+	af = frame_queue_peek_writable(q);
+	if (!af)
+		return -1;
 
+	af->pts = frame->pts;
+	af->format = frame->format;
+	af->duration = frame->duration;
+	af->serial = this->serial_;
+
+	//3.设置Frame并放入FrameQueue
+	av_frame_move_ref(af->frame, frame);
+	frame_queue_push(q);
 	return 0;
 }

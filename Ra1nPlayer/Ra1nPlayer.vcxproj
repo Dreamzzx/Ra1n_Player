@@ -177,6 +177,7 @@
     <ClCompile Include="myslider.cpp" />
     <ClCompile Include="playlist.cpp" />
     <ClCompile Include="ra1nplayer.cpp" />
+    <ClCompile Include="sonic.c" />
     <ClCompile Include="title.cpp" />
     <QtRcc Include="mainwidget.qrc" />
     <QtUic Include="ctrlbar.ui" />
@@ -196,6 +197,7 @@
     <QtMoc Include="title.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="sonic.h" />
     <QtMoc Include="displaywind.h" />
     <ClInclude Include="ffmsg.h" />
     <ClInclude Include="ffmsg_queue.h" />

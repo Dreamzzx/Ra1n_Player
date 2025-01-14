@@ -20,10 +20,16 @@ int DisplayWind::Draw(const Frame * vp)
 {
 	AVFrame* sp = nullptr;
 	uint8_t* buffer = nullptr;
+
+	if (!img_scaler_)
+	{
+		img_scaler_ = new ImageScaler();
+	}
+
 	if (!vp)
 	{
 		//Ã»ÓÐÖ¡äÖÈ¾Ò»Ö¡ºÚÆÁ
-		SDL_SetRenderDrawColor(img_scaler_->render, 0, 0, 0, 255);
+		SDL_SetRenderDrawColor(img_scaler_->render, 52, 52, 52, 0);
 		SDL_RenderClear(img_scaler_->render);
 		SDL_RenderPresent(img_scaler_->render);
 		return -1;
@@ -39,11 +45,6 @@ int DisplayWind::Draw(const Frame * vp)
 
 		win_width_ = width();
 		win_height_ = height();
-
-	if (!img_scaler_)
-	{
-		img_scaler_ = new ImageScaler();
-	}
 
 	if (!img_scaler_->sws_ctx)
 	{
@@ -93,8 +94,8 @@ int DisplayWind::Draw(const Frame * vp)
 
 		if (img_scaler_->sws_ctx)
 		{
-		sws_freeContext(img_scaler_->sws_ctx);
-		img_scaler_->sws_ctx = nullptr;
+			sws_freeContext(img_scaler_->sws_ctx);
+			img_scaler_->sws_ctx = nullptr;
 		}
 
 		return 0;

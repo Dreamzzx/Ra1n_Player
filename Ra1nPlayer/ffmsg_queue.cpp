@@ -69,7 +69,7 @@ int msg_queue_get(MessageQueue* q, AVMessage* msg, int block)
 	
 	for (;;)
 	{
-		if (!q->abort_request)
+		if (q->abort_request)
 		{
 			return -1;
 			break;

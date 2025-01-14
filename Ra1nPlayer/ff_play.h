@@ -5,7 +5,9 @@
 #include <functional>
 #include "ffmsg_queue.h"
 #include "ff_data.h"
+#include "sonic.h"
 #include <libswscale/swscale.h>
+#include <mutex>
 //音频CB
 typedef void(*audio_cb)(void* opaque, Uint8* stream, int len);
 
@@ -63,7 +65,7 @@ class FFPlayer
 public:
 	FFPlayer();
 	~FFPlayer();
-	int ffp_create();
+
 	void ffp_destroy();
 	int ffp_prepare_async_l(char* filename);
 
@@ -104,6 +106,7 @@ private:
 public:
 	char* input_filename_ = nullptr;
 	int abort_request = 0;
+	std::mutex mtx; // 用来控制abort_request确保程序正确退出
 
 	//主要上下文
 	AVFormatContext* ic_ = nullptr;
@@ -148,9 +151,12 @@ public:
 	audio_cb audio_callback;     
 	
 	uint8_t* audio_buf = nullptr;  //指向SDL需要采样的数据
-	uint8_t* audio_buf1 = nullptr; //指向重采样后的数据
+	uint8_t* audio_resample_buf = nullptr; //指向重采样后的数据
+	uint8_t* sonic_buf = nullptr;	   //指向变速后的数据
+
 	unsigned int audio_buf_size = 0;  //待播放的一帧音频数据
-	unsigned int audio_buf1_size = 0; //申请到音频缓冲区的实际大小
+	unsigned int audio_resample_buf_size = 0; //申请到音频缓冲区的实际大小
+	unsigned int sonic_buf_size = 0; //申请到音频缓冲区的实际大小
 	int audio_buf_index = 0; // 更新拷贝位置
 
 	//float volumeFactor = 1.0;//音量因子
@@ -163,6 +169,10 @@ public:
 	//read_thread 
 	std::thread* read_thread_ = nullptr;
 	std::thread* video_refresh_thread_ = nullptr;
+
+	sonicStream sncStream; // sonic库 用来处理音频变速不变调
+	bool useSonic = false;
+	bool sonic_stream_ready = false;
 };
 
 inline static void ffp_notify_msg1(FFPlayer *ffp,int what)

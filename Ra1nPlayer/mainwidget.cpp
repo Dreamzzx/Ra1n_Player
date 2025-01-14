@@ -60,8 +60,10 @@ void MainWidget::InitQss()
     ui.showWind->setStyleSheet(QString::fromStdString(show_widget_qss));
 }
 
+//创建一个播放器结构用来播放
 void MainWidget::OnPlayOrPause()
 {
+    AVMessage msg;
     int ret = 0;
 
     //检测mp是否创建
@@ -79,10 +81,6 @@ void MainWidget::OnPlayOrPause()
             mp_ = nullptr;
             return;
         }
-        //设置视频回调
-        mp_->SetVideofreshCallback(std::bind(&MainWidget::OutputVideo, this, std::placeholders::_1));
-        //设置Ctrl回调
-        mp_->SetCtrlCallBack(std::bind(&CtrlBar::SetTime, ui.ctrlBarWind, std::placeholders::_1, std::placeholders::_2));
     }
         //设置url
         QByteArray byteArray = FilePath_->toUtf8(); // 转换为 UTF-8 编码
@@ -92,27 +90,42 @@ void MainWidget::OnPlayOrPause()
         m_title.SetName(fileInfo.baseName());
         //准备工作
         ret = mp_->ra1nmp_prepare_async();
-        ///设置SDL句柄
-        ui.showWind->setWinID(ui.showWind->winId());
-
         if (ret < 0)
         {
             delete mp_;
-            mp_ = nullptr; 
+            mp_ = nullptr;
             return;
         }
+        //设置视频回调
+        msg.what = FFP_MSG_SET_VIDEOBACK;
+        msg_queue_put(&mp_->getffplayer()->msg_queue_, &msg);
+        mp_->SetVideofreshCallback(std::bind(&MainWidget::OutputVideo, this, std::placeholders::_1));
+
+        //设置Ctrl回调
+        msg.what = FFP_MSG_SET_CTRLBACK;
+        msg_queue_put(&mp_->getffplayer()->msg_queue_, &msg);
+        mp_->SetCtrlCallBack(std::bind(&CtrlBar::SetTime, ui.ctrlBarWind, std::placeholders::_1, std::placeholders::_2));
+        ///设置SDL句柄
+        ui.showWind->setWinID(ui.showWind->winId());
+
 }
 
+// 继续/暂停播放
 void MainWidget::PlayOrPause()
 {
+    AVMessage msg;
     if (mp_) 
     {
-        if (mp_->is_paused()) {
-            mp_->ra1nmp_play();
+        if (mp_->is_paused()) 
+        {
+            msg.what = RA1NP_MSG_CONTINUE;
+            msg_queue_put(&mp_->getffplayer()->msg_queue_, &msg);
             emit& CtrlBar::ChangePlay_Or_PauseBtnStyle;
         }
-        else {
-            mp_->ra1nmp_pause();
+        else 
+        {
+            msg.what = RA1NP_MSG_PAUSE;
+            msg_queue_put(&mp_->getffplayer()->msg_queue_, &msg);
             emit& CtrlBar::ChangePlay_Or_PauseBtnStyle;
         }
     }
@@ -121,9 +134,16 @@ void MainWidget::PlayOrPause()
 //中止播放
 void MainWidget::OnStop()
 {
+    AVMessage msg;
     if (mp_)
     {
-        mp_->ra1nmp_destroy();
+        msg.what = RA1NP_MSG_STOP;
+
+        mp_->ra1nmp_set_state(RA1NP_STATE_STOP);
+        msg_queue_put(&mp_->getffplayer()->msg_queue_, &msg);
+        while (mp_->ra1nmp_get_state() == RA1NP_STATE_STOP) {
+            av_usleep(10000);
+        }
         ui.showWind->destory();
 
         delete mp_;
@@ -156,7 +176,7 @@ int MainWidget::message_loop(void*arg)
         int retval = mp->ra1nmp_get_msg(&msg, 1);
 
         if (retval < 0)
-            break;
+            break; 
         switch (msg.what)
         {
         case RA1NP_MSG_OPEN_INPUT:
@@ -166,8 +186,33 @@ int MainWidget::message_loop(void*arg)
             qDebug() << "FFP_MSG_PREPARDE";
             break;
         case RA1NP_MSG_STOP:
-            qDebug() << "FFP_MSG_STOP";
+            qDebug() << "FFP_MSG_STOP: play stop !";
             break; 
+        case  RA1NP_MSG_CONTINUE:
+            qDebug() << "RA1NP_MSG_CONTINUE: play continue";
+            break;
+        case RA1NP_MSG_PAUSE:
+            qDebug() << "RA1NP_MSG_PAUSE: play pause";
+            break;
+        case RA1NP_MSG_SEEK:
+            qDebug() << "RA1NP_MSG_SEEK";
+            break;
+        case RA1NP_MSG_SET_VOLUME:
+            qDebug() << "RA1NP_MSG_SET_VOLUME:" <<msg.arg1;
+            break;
+        case RA1NP_MSG_VOLUME_MUTED:
+            qDebug() << "RA1NP_MSG_VOLUME_MUTED";
+            break;
+
+        case FFP_MSG_CREATE:
+            qDebug() << "FFP_MSG_CREATE: create FFP";
+            break;
+        case FFP_MSG_SET_VIDEOBACK:
+            qDebug() << "FFP_MSG_SET_VIDEOBACK: set video back";
+            break;
+        case FFP_MSG_SET_CTRLBACK:
+            qDebug() << "FFP_MSG_SET_CTRLBACK: set ctrl back";
+            break;
         }
     }
     return 0;
@@ -178,18 +223,29 @@ int MainWidget::OutputVideo(const Frame* frame)
     return ui.showWind->Draw(frame);
 }
 
+// seek操作
 void MainWidget::PlaySeek(double position)
 {
-    if(mp_)
-    mp_->rainmp_seek(position);
+    if (mp_) {
+    AVMessage msg;
+    msg.what = RA1NP_MSG_SEEK;
+    msg.arg1 = position;
+    msg_queue_put(&mp_->getffplayer()->msg_queue_, &msg);
+    }
 }
 
+// 设置音量
 void MainWidget::VolumeChange(float position)
 {
-    if(mp_)
-    mp_->ra1nmp_set_volume(position);
+    if (mp_) {
+        AVMessage msg;
+        msg.what = RA1NP_MSG_SET_VOLUME;
+        msg.arg1 = position;
+        msg_queue_put(&mp_->getffplayer()->msg_queue_, &msg);
+    }
 }
 
+// 设置倍速
 void MainWidget::SpeedChange(const QString str)
 {
     if (!mp_)
@@ -199,6 +255,9 @@ void MainWidget::SpeedChange(const QString str)
     float speed = str.toFloat(&flag);
     if (flag)
     {
+        AVMessage msg;
+        msg.what = RA1NP_MSG_SET_SPEED;
+        msg_queue_put(&mp_->getffplayer()->msg_queue_, &msg);
         mp_->ra1nmp_set_speed(speed);
     }
     else
@@ -251,14 +310,21 @@ void MainWidget::OpenFile()
     FilePath_ = new QString();
     *FilePath_ =  QFileDialog::getOpenFileName(this, u8"打开文件", QDir::homePath(),
         "(*.mp4 *.avi *.flv)");
-    if(FilePath_->size() != 0)
-    emit OnPlayOrPause();
+    if (FilePath_->size() != 0) 
+    {
+        emit OnPlayOrPause();
+    }
 }
 
+// 静音
 void MainWidget::VoiceMuted()
 {
-    if(mp_)
-    mp_->ra1nmp_set_volum_muted();
+    if (mp_) 
+    {
+        AVMessage msg;
+        msg.what = RA1NP_MSG_VOLUME_MUTED;
+        msg_queue_put(&mp_->getffplayer()->msg_queue_, &msg);
+    }
 }
 
 void MainWidget::Show_Full_Normal()

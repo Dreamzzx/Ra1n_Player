@@ -23,22 +23,11 @@ extern "C"
 }
 
 #define PKTS_MAX_SIZE       25//包队列最大限制
-#define PICTURE_QUEUE_SIZE  3
+#define PICTURE_QUEUE_SIZE  5
 #define SAMPLE_QUEUE_SIZE   9
 #define FRAME_QUEUE_SIZE    9
 
 #define REFRESN_RATE 0.01  //视频刷新线程频率
-
-//typedef struct FFPlayerCtx
-//{
-//	AVFormatContext* ic = nullptr;
-//	AVCodecContext* audioCtx = nullptr;
-//	AVCodecContext* videoCtx = nullptr;
-//
-//	PacketQueue* video_queue = nullptr;
-//	PacketQueue* audio_queue = nullptr;
-//
-//}FFPlayerCtx;
 
 /*   PacketQueue   */
 typedef struct PacketQueue
@@ -51,6 +40,7 @@ typedef struct PacketQueue
 	SDL_cond* cond= nullptr;
 	SDL_cond* not_full = nullptr;
 	SDL_mutex* mutex= nullptr;
+	//volatile bool queue_ready = false;
 }PacketQueue;
 
 //启用包队列

@@ -14,6 +14,9 @@ void packet_queue_start(PacketQueue* queue,AVPacket* flush_pkt)
 
 void packet_queue_put_pkt(PacketQueue* q,AVPacket* pkt)
 {
+	//while (!q->queue_ready) {
+	//	SDL_Delay(100);
+	//}
 	SDL_LockMutex(q->mutex);
 	while (q->nb_packets >= PKTS_MAX_SIZE && !q->abort_request) {
 		SDL_CondWaitTimeout(q->not_full, q->mutex,500); // 等待条件变量，解锁并阻塞线程，直到被唤醒
@@ -30,6 +33,10 @@ void packet_queue_put_pkt(PacketQueue* q,AVPacket* pkt)
 int packet_queue_get_pkt(PacketQueue* q,AVPacket* pkt)
 {
 	int ret = 0;
+
+	//while (!q->queue_ready) {
+	//	SDL_Delay(100);
+	//}
 	SDL_LockMutex(q->mutex);
 	while (!q->abort_request) //检查是否退出
 	{

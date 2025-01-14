@@ -27,9 +27,11 @@ public:
 	//暂停播放
 	int ra1nmp_pause();
 	//seek到指定位置
-	int rainmp_seek(double position);
+	int ra1nmp_seek(double position);
 	//获取播放状态
-	int rainmp_get_state();
+	int ra1nmp_get_state();
+	//设置播放状态
+	void ra1nmp_set_state(int state);
 	//是不是播放中
 	bool ra1nmp_is_playing();
 	//当前播放位置
@@ -49,6 +51,7 @@ public:
 
 	inline void ra1nmp_set_speed(const float& speed) {
 		ffplayer_->volume_speed = speed;
+		ffplayer_->useSonic = true;
 	}
 	
 	//循环函数

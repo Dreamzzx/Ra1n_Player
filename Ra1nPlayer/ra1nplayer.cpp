@@ -13,7 +13,12 @@ Ra1nPlayer::~Ra1nPlayer()
 int Ra1nPlayer::ra1nmp_create(std::function<int(void*)> msg_loop)
 {
 	int ret = 0;
+	AVMessage msg;
 	ffplayer_ = new FFPlayer();
+
+	msg.what = FFP_MSG_CREATE;
+	msg_queue_put(&ffplayer_->msg_queue_,&msg);
+	
 	if (!ffplayer_)
 	{
 		std::cout << "new ffplayer fialed!\n" << std::endl;
@@ -21,11 +26,6 @@ int Ra1nPlayer::ra1nmp_create(std::function<int(void*)> msg_loop)
 	}
 	msg_loop_ = msg_loop;
 	
-	ret = ffplayer_->ffp_create();
-
-	if (ret < 0)
-		return -1;
-
 	return 0;
 }
 
@@ -40,9 +40,9 @@ int Ra1nPlayer::ra1nmp_set_data_source(const char* url)
 int Ra1nPlayer::ra1nmp_prepare_async()
 {
 	//判断mp的状态
-
+	// 
 	//正在准备中
-	mp_state_ = MP_STATE_ASYNC_PREPARING;
+	ra1nmp_set_state(RA1NP_STATE_ASYNC_PREPARING);
 	//启用消息队列
 	msg_queue_start(&ffplayer_->msg_queue_); 
 	//创建循环线程
@@ -68,6 +68,7 @@ int Ra1nPlayer::ra1nmp_play()
 int Ra1nPlayer::ra1nmp_destroy()
 {
 	ffplayer_->stream_close();
+	ra1nmp_set_state(RA1NP_STATE_FREE);
 	return 0;
 }
 
@@ -78,11 +79,21 @@ int Ra1nPlayer::ra1nmp_pause()
 	return 0;
 }
 
-int Ra1nPlayer::rainmp_seek(double position)
+int Ra1nPlayer::ra1nmp_seek(double position)
 {
 	ffplayer_->seek_req = true;
 	ffplayer_->position = position;
 	return 0;
+}
+
+int Ra1nPlayer::ra1nmp_get_state()
+{
+	return mp_state_;
+}
+
+void Ra1nPlayer::ra1nmp_set_state(int state)
+{
+	mp_state_ = state;
 }
 
 void Ra1nPlayer::ra1nmp_set_volume(float position)
@@ -92,6 +103,7 @@ void Ra1nPlayer::ra1nmp_set_volume(float position)
 
 int Ra1nPlayer::ra1nmp_get_msg(AVMessage* msg, int block)
 {
+	double num;
 	while (1)
 	{
 		int continue_wait_next_msg = 0;
@@ -105,8 +117,23 @@ int Ra1nPlayer::ra1nmp_get_msg(AVMessage* msg, int block)
 		case FFP_MSG_START:
 			continue_wait_next_msg = 1;
 			break;
+		case RA1NP_MSG_CONTINUE:
+			ra1nmp_play();
+			break;
+		case RA1NP_MSG_PAUSE:
+			ra1nmp_pause();
+			break;
 		case RA1NP_MSG_STOP:
-			ffplayer_->stream_close();
+			ra1nmp_destroy();
+			break;
+		case RA1NP_MSG_SEEK:
+			ra1nmp_seek(static_cast<double>(msg->arg1));
+			break;
+		case RA1NP_MSG_SET_VOLUME:
+			ra1nmp_set_volume(static_cast<float>(msg->arg1));
+			break;
+		case RA1NP_MSG_VOLUME_MUTED:
+			ra1nmp_set_volum_muted();
 			break;
 		default:
 			break;
