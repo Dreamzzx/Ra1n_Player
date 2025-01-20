@@ -17,6 +17,8 @@
 
 #define RA1NP_MSG_COMPLETED					300 // 播放完成
 
+#define RA1NP_MSG_USE_HW					301 // 硬解码
+
 #define RA1NP_MSG_VIDEO_SIZE_CHANGED			400 // 视频大小发送变换 arg1 = width arg2 = height
 #define RA1NP_MSG_SAR_CHANGED					401 // arg1 = sar.num   arg2 = sar.den
 #define RA1NP_MSG_VIDEO_RENDERING_START       402 // 开始画面渲染

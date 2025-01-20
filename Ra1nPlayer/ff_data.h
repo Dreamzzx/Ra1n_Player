@@ -19,6 +19,7 @@ extern "C"
 #include <libswresample/swresample.h>
 #include <libavutil/time.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/hwcontext.h>
 #include <SDL.h>
 }
 

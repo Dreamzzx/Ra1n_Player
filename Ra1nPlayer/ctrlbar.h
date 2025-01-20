@@ -2,6 +2,9 @@
 
 #include <QWidget>
 #include "ui_ctrlbar.h"
+extern "C" {
+#include <libavutil/hwcontext.h>
+}
 
 class CtrlBar : public QWidget
 {
@@ -15,6 +18,7 @@ public:
 	void ChangePlay_Or_PauseBtnStyle();
 	void ChangeVoiceBtnStyle();
 	void isVoiceMute();
+	void is_HwDecode(QString type);
 
 private:
 
@@ -42,6 +46,7 @@ signals:
 	void Play_Seek(double position);
 	void Volume_Change(float positon);
 	void Speed_Change(const QString str);
+	void Use_HwDecode(const QString str);
 	
 
 private:

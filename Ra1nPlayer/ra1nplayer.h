@@ -7,6 +7,7 @@
 #include "ffmsg_queue.h"
 #include "ff_play.h"
 #include "ffmsg.h"
+#include <QString>
 class Ra1nPlayer
 {
 public:
@@ -49,6 +50,8 @@ public:
 	//¾²Òô
 	void ra1nmp_set_volum_muted();
 
+	void ra1nmp_set_hwdecoder(const char* str);
+
 	inline void ra1nmp_set_speed(const float& speed) {
 		ffplayer_->volume_speed = speed;
 		ffplayer_->useSonic = true;
@@ -70,6 +73,7 @@ public:
 	{
 		return paused_;
 	}
+	QString hw_type;
 private:
 	std::mutex mutex_; 
 	FFPlayer *ffplayer_ = nullptr;
@@ -80,6 +84,7 @@ private:
 	char* data_source_ = nullptr;//url
 	int mp_state_;//²¥·Å×´Ì¬
 	int paused_; // 0²¥·Å 1 ÔÝÍ£
+
 };
 #endif // !RAINPLAYER_H
 

@@ -10,7 +10,6 @@ CtrlBar::CtrlBar(QWidget *parent)
 	ui.volume_progressBar->setValue(50);
 
 	//倍速
-	ui.speed_comboBox->addItem("0.25");
 	ui.speed_comboBox->addItem("0.5");
 	ui.speed_comboBox->addItem("0.75");
 	ui.speed_comboBox->addItem("1.0");
@@ -18,7 +17,19 @@ CtrlBar::CtrlBar(QWidget *parent)
 	ui.speed_comboBox->addItem("1.5");
 	ui.speed_comboBox->addItem("1.75");
 	ui.speed_comboBox->addItem("2.0");
-	ui.speed_comboBox->setCurrentIndex(3);
+	ui.speed_comboBox->setCurrentIndex(2);
+	//硬解码 HW
+	ui.HWComboBox->clear();
+	ui.HWComboBox->addItem(u8"请选择硬件解码设备");
+	AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;
+	//获取支持的硬件解码器
+	while ((type = av_hwdevice_iterate_types(type)) != AV_HWDEVICE_TYPE_NONE) {
+		ui.HWComboBox->addItem(av_hwdevice_get_type_name(type));
+	}
+	if (ui.HWComboBox->count() == 0) {
+		ui.HWComboBox->clear();
+		ui.HWComboBox->addItem(u8"没有支持的硬件解码设备");
+	}
 
 	//connect
 	connect(ui.play_or_pause_Btn, &QPushButton::clicked, this, &CtrlBar::Play_Or_PauseBtnClick);
@@ -33,13 +44,21 @@ CtrlBar::CtrlBar(QWidget *parent)
 	connect(ui.volume_progressBar, &MySlider::SliderChange, this, &CtrlBar::Volume_Change);
 	connect(ui.volume_progressBar, &MySlider::SliderChange, this, &CtrlBar::ChangeVoiceBtnStyle);
 	connect(ui.speed_comboBox, &QComboBox::textActivated, this, &CtrlBar::Speed_Change);
-	
+	connect(ui.HWComboBox, &QComboBox::textActivated, this, &CtrlBar::is_HwDecode);
 
 	InitUi();
 }
 
 CtrlBar::~CtrlBar()
 {}
+
+void CtrlBar::is_HwDecode(QString type)
+{
+	if (type != "请选择硬件解码设备")
+	{
+		emit Use_HwDecode(type);
+	}
+}
 
 void CtrlBar::SetTime(int event,double playtime)
 {
@@ -88,6 +107,7 @@ void CtrlBar::isVoiceMute() {
 	}
 	voice_mute = !voice_mute;
 }
+
 
 void CtrlBar::ChangeVoiceBtnStyle()
 {

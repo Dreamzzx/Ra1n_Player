@@ -47,6 +47,8 @@ int Ra1nPlayer::ra1nmp_prepare_async()
 	msg_queue_start(&ffplayer_->msg_queue_); 
 	//创建循环线程
 	msg_thread_ = new std::thread(&Ra1nPlayer::ra1nmp_msg_loop,this,this);
+
+	//
 	//调用ffplayer
 	int ret = ffplayer_->ffp_prepare_async_l(data_source_);
 	paused_ = 0;
@@ -67,8 +69,10 @@ int Ra1nPlayer::ra1nmp_play()
 
 int Ra1nPlayer::ra1nmp_destroy()
 {
+	//avformat_close_input(&ffplayer_->ic_);
 	ffplayer_->stream_close();
 	ra1nmp_set_state(RA1NP_STATE_FREE);
+
 	return 0;
 }
 
@@ -157,6 +161,11 @@ int Ra1nPlayer::ra1nmp_msg_loop(void* arg)
 void Ra1nPlayer::ra1nmp_set_volum_muted()
 {
 	ffplayer_->volum_muted = !ffplayer_->volum_muted;
+}
+
+void Ra1nPlayer::ra1nmp_set_hwdecoder(const char* type)
+{
+	ffplayer_->video_set_hwdecode_type(type);
 }
 
 void Ra1nPlayer::SetVideofreshCallback(std::function<int(const Frame*)> callback)

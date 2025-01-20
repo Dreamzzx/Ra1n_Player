@@ -44,6 +44,7 @@ void MainWidget::InitPlayer()
     connect(ui.ctrlBarWind, &CtrlBar::Play_Seek, this, &MainWidget::PlaySeek);
     connect(ui.ctrlBarWind, &CtrlBar::Volume_Change, this, &MainWidget::VolumeChange);
     connect(ui.ctrlBarWind, &CtrlBar::Speed_Change, this, &MainWidget::SpeedChange);
+    connect(ui.ctrlBarWind, &CtrlBar::Use_HwDecode, this, &MainWidget::HwDecodeName);
     this->resize(800, 600);
 }
 
@@ -88,6 +89,13 @@ void MainWidget::OnPlayOrPause()
         //设置视频标题
         QFileInfo fileInfo(*FilePath_);
         m_title.SetName(fileInfo.baseName());
+
+        //检查是否使用硬解码
+        if (use_hwdecoder)
+        {
+            //qDebug() << hw_type;
+            mp_->ra1nmp_set_hwdecoder(hw_type.toUtf8().constData());
+        }
         //准备工作
         ret = mp_->ra1nmp_prepare_async();
         if (ret < 0)
@@ -107,7 +115,6 @@ void MainWidget::OnPlayOrPause()
         mp_->SetCtrlCallBack(std::bind(&CtrlBar::SetTime, ui.ctrlBarWind, std::placeholders::_1, std::placeholders::_2));
         ///设置SDL句柄
         ui.showWind->setWinID(ui.showWind->winId());
-
 }
 
 // 继续/暂停播放
@@ -187,7 +194,7 @@ int MainWidget::message_loop(void*arg)
             break;
         case RA1NP_MSG_STOP:
             qDebug() << "FFP_MSG_STOP: play stop !";
-            break; 
+            return 0;
         case  RA1NP_MSG_CONTINUE:
             qDebug() << "RA1NP_MSG_CONTINUE: play continue";
             break;
@@ -263,6 +270,18 @@ void MainWidget::SpeedChange(const QString str)
     else
     {
         printf("倍速转换失败");
+    }
+}
+
+void MainWidget::HwDecodeName(const QString type)
+{
+    if (type.compare(u8"请选择硬件解码设备") != 0)
+    {
+        hw_type = type;
+        use_hwdecoder = true;
+    }
+    else {
+        use_hwdecoder = false;
     }
 }
 

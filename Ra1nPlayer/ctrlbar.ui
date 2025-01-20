@@ -167,6 +167,9 @@
         <widget class="QComboBox" name="speed_comboBox"/>
        </item>
        <item>
+        <widget class="QComboBox" name="HWComboBox"/>
+       </item>
+       <item>
         <spacer name="horizontalSpacer">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>

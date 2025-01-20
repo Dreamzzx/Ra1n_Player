@@ -11,6 +11,8 @@
 //音频CB
 typedef void(*audio_cb)(void* opaque, Uint8* stream, int len);
 
+class FFPlayer;
+
 class Decoder
 {
 public:
@@ -18,7 +20,7 @@ public:
 	~Decoder();
 
 	//解码器初始化
-	void decoder_init(AVCodecContext* avctx,FrameQueue *fq);
+	void decoder_init(AVCodecContext* avctx,FrameQueue *fq,void*is);
 	
 	//创建和启动解码线程
 	int decoder_start(enum AVMediaType codec_type, const char* thread_name, void* arg);
@@ -41,6 +43,8 @@ public:
 	//将解码后的音频帧放入帧队列
 	int put_sample(FrameQueue* q, AVFrame* frame);
 
+	int hw_decode_gpu2cpu_copy(AVFrame* dst, AVFrame* src);
+
 	AVCodecContext* getCtx()
 	{
 		return avctx_;
@@ -52,6 +56,7 @@ public:
 
 private:
 	AVPacket pkt_;
+	FFPlayer* is = nullptr;
 	FrameQueue* frame_queue_;  // 帧队列 
 	AVCodecContext* avctx_;    // 解码器上下文 
 	int pkt_serial_;		   // 包序列
@@ -85,6 +90,8 @@ public:
 	void stream_component_close(int stream_index);
 
 	inline void set_volume(int volume) { this->volume = volume; }
+
+	void video_set_hwdecode_type(const char* type);
 	////设置重采样后的音频帧音量大小
 	//void set_volume(Frame *src_f,int channels, int nb_samples,float volume);
 private:
@@ -102,6 +109,10 @@ private:
 	void video_display();
 	int video_refresh_thread();
 	void video_refresh(double* remaining_time);
+
+	int init_HwDecoder(AVCodecContext *avctx,AVCodec *codec);
+	void close_HwDecoder();
+	static enum AVPixelFormat get_hw_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts);
 
 public:
 	char* input_filename_ = nullptr;
@@ -173,6 +184,12 @@ public:
 	sonicStream sncStream; // sonic库 用来处理音频变速不变调
 	bool useSonic = false;
 	bool sonic_stream_ready = false;
+
+	std::string hw_decode_type;// 硬解码类型
+	bool use_hwdecode = false;
+	static enum AVPixelFormat hw_pix_fmt;
+	AVBufferRef* hw_device_buf = nullptr;
+
 };
 
 inline static void ffp_notify_msg1(FFPlayer *ffp,int what)

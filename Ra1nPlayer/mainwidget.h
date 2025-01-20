@@ -32,6 +32,7 @@ private:
     void PlaySeek(double position);
     void VolumeChange(float position);
     void SpeedChange(const QString str);
+    void HwDecodeName(const QString str);
 
     void mousePressEvent(QMouseEvent* event);
     void mouseReleaseEvent(QMouseEvent* event);
@@ -55,4 +56,7 @@ private:
 
     bool isleftpress_ = false; //判断是否是鼠标左键按下
     QPoint plast_; //鼠标左键按下的鼠标位置
+
+    QString hw_type;
+    bool use_hwdecoder = false;
 };
