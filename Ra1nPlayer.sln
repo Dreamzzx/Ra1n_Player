@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33723.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ra1nPlayer", "Ra1nPlayer\Ra1nPlayer.vcxproj", "{E7FF7370-B1E6-4139-B71D-5B33502716F1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E7FF7370-B1E6-4139-B71D-5B33502716F1}.Debug|x64.ActiveCfg = Debug|x64
+		{E7FF7370-B1E6-4139-B71D-5B33502716F1}.Debug|x64.Build.0 = Debug|x64
+		{E7FF7370-B1E6-4139-B71D-5B33502716F1}.Release|x64.ActiveCfg = Release|x64
+		{E7FF7370-B1E6-4139-B71D-5B33502716F1}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E156D815-8D63-4551-BB0D-FF3B6D4EA8A1}
+	EndGlobalSection
+EndGlobal

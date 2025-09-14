@@ -1,0 +1,20 @@
+﻿   Qt/MSBuild: 3.4.1.0
+   Qt: 5.15.2
+  displaywind.cpp
+D:\Project\videoplayer\Ra1n_Player-1.6\Ra1nPlayer\lib\ffmpeg-master-latest-win64-gpl-shared\include\libavutil\rational.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“displaywind.cpp”)
+  
+  qrc_mainwidget.cpp
+  moc_mainwidget.cpp
+  moc_OpenglRender.cpp
+  moc_displaywind.cpp
+D:\Project\videoplayer\Ra1n_Player-1.6\Ra1nPlayer\lib\ffmpeg-master-latest-win64-gpl-shared\include\libavutil\rational.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“x64/Debug/qt/moc/moc_displaywind.cpp”)
+  
+D:\Project\videoplayer\Ra1n_Player-1.6\Ra1nPlayer\lib\ffmpeg-master-latest-win64-gpl-shared\include\libavutil\rational.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“x64/Debug/qt/moc/moc_mainwidget.cpp”)
+  
+D:\Project\videoplayer\Ra1n_Player-1.6\Ra1nPlayer\lib\ffmpeg-master-latest-win64-gpl-shared\include\libavutil\rational.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“x64/Debug/qt/moc/moc_OpenglRender.cpp”)
+  
+  Ra1nPlayer.vcxproj -> D:\Project\videoplayer\Ra1n_Player-1.6\x64\Debug\Ra1nPlayer.exe

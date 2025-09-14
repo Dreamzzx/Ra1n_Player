@@ -1,0 +1,22 @@
+*{
+    background-color:darkgray;
+    border:none;
+    color: white;
+}
+
+QPushButton:hover{
+    background-color: rgb(159, 159, 159);
+}
+
+QPushButton:pressed{
+    color: red;
+}
+
+
+QPushButton#closeBtn:hover{
+    background-color: tomato;
+}
+
+QPushButton#closeBtn:pressed{
+    background-color:red;
+}
